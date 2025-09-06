@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin - Update Products</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 10px;
+        background: #1a1a1a; /* dark background same as index */
+        color: #f5f5f5;
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 15px;
+        color: #ffcc00;
+      }
+      .controls {
+        margin-bottom: 15px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+      }
+      input,
+      select,
+      button {
+        padding: 8px;
+        border-radius: 4px;
+        border: none;
+        font-size: 14px;
+      }
+      input,
+      select {
+        flex: 1;
+        min-width: 150px;
+      }
+      button {
+        background: #ff6600;
+        color: #fff;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #e65c00;
+      }
+      .table-wrapper {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        background: #2b2b2b;
+      }
+      th,
+      td {
+        padding: 8px;
+        border: 1px solid #444;
+        text-align: left;
+        font-size: 14px;
+      }
+      th {
+        background: #333;
+        color: #ffcc00;
+      }
+      .form-section {
+        margin-top: 20px;
+        background: #2b2b2b;
+        padding: 15px;
+        border-radius: 8px;
+      }
+      .form-section h2 {
+        margin-top: 0;
+        color: #ffcc00;
+      }
+      .form-row {
+        margin-bottom: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .form-row label {
+        width: 100px;
+        font-size: 14px;
+      }
+      .form-row input {
+        flex: 1;
+        min-width: 150px;
+        padding: 6px;
+        border-radius: 4px;
+        border: none;
+      }
+      @media (max-width: 600px) {
+        .form-row label {
+          width: 100%;
+        }
+        .form-row input {
+          width: 100%;
+        }
+      }
+      /* inside your <style> */
+      td:last-child,
+      th:last-child {
+        position: sticky;
+        right: 0;
+        background: #333; /* match header style */
+        z-index: 2;
+      }
+      button {
+        background: #ff6600;
+        color: #fff;
+        cursor: pointer;
+        border: none;
+        border-radius: 4px;
+        padding: 6px 10px;
+      }
+      button:hover {
+        background: #e65c00;
+      }
+      button.delete-btn {
+        background: #cc0000;
+      }
+      button.delete-btn:hover {
+        background: #990000;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>ABS Admin - Manage Products</h1>
+
+    <div class="controls">
+      <input type="text" id="searchBox" placeholder="Search products..." />
+      <select id="categoryFilter">
+        <option value="">All Categories</option>
+      </select>
+      <button onclick="downloadJSON()">Download JSON</button>
+    </div>
+
+    <div class="table-wrapper">
+      <table id="productTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Unit</th>
+            <th>MRP</th>
+            <th>SALE</th>
+            <th>Image</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="form-section" id="formSection">
+      <h2 id="formTitle">Add New Product</h2>
+      <div class="form-row">
+        <label>Name:</label><input type="text" id="prodName" />
+      </div>
+      <div class="form-row">
+        <label>Category:</label><input type="text" id="prodCategory" />
+      </div>
+      <div class="form-row">
+        <label>Unit:</label><input type="text" id="prodUnit" />
+      </div>
+      <div class="form-row">
+        <label>SALE:</label
+        ><input type="number" id="prodSale" oninput="updateMRP()" />
+      </div>
+      <div class="form-row">
+        <label>MRP:</label><input type="number" id="prodMrp" readonly />
+      </div>
+      <div class="form-row">
+        <label>Image URL:</label><input type="text" id="prodImg" />
+      </div>
+      <button onclick="saveProduct()">Save Product</button>
+      <button onclick="resetForm()">Cancel</button>
+    </div>
+
+    <script>
+      let products = [
+        {
+          id: 1,
+          name: "10 CM ELECTRIC SPARKLERS",
+          category: "SPARKLERS",
+          unit: "1 BOX",
+          mrp: 120,
+          sale: 12,
+          img: "https://i.postimg.cc/Vk63x2xF/image.png",
+        },
+        {
+          id: 2,
+          name: "10 CM COLOR SPARKLERS",
+          category: "SPARKLERS",
+          unit: "1 BOX",
+          mrp: 150,
+          sale: 15,
+          img: "https://i.postimg.cc/RFYd2Jgz/image.png",
+        },
+        {
+          id: 3,
+          name: "10 CM GREEN SPARKLERS",
+          category: "SPARKLERS",
+          unit: "1 BOX",
+          mrp: 180,
+          sale: 18,
+          img: "https://i.postimg.cc/DzLb7JfT/image.png",
+        },
+        {
+          id: 4,
+          name: "10 CM RED SPARKLERS",
+          category: "SPARKLERS",
+          unit: "1 BOX",
+          mrp: 200,
+          sale: 20,
+          img: "https://i.postimg.cc/7Z7gZQXd/image.png",
+        },
+        {
+          id: 5,
+          name: "15 CM ELECTRIC SPARKLERS",
+          category: "SPARKLERS",
+          unit: "1 BOX",
+          mrp: 300,
+          sale: 30,
+          img: "https://i.postimg.cc/Vk63x2xF/image.png",
+        },
+        {
+          id: 6,
+          name: "15 CM CRACKLING SPARKLERS",
+          category: "SPARKLERS",
+          unit: "1 BOX",
+          mrp: 330,
+          sale: 33,
+          img: "https://i.postimg.cc/RFYd2Jgz/image.png",
+        },
+        {
+          id: 7,
+          name: "15 CM GREEN SPARKLERS",
+          category: "SPARKLERS",
+          unit: "1 BOX",
+          mrp: 380,
+          sale: 38,
+          img: "https://i.postimg.cc/DzLb7JfT/image.png",
+        },
+        {
+          id: 8,
+          name: "15 CM RED SPARKLERS",
+          category: "SPARKLERS",
+          unit: "1 BOX",
+          mrp: 420,
+          sale: 42,
+          img: "https://i.postimg.cc/7Z7gZQXd/image.png",
+        },
+        {
+          id: 9,
+          name: "30 CM ELECTRIC SPARKLERS",
+          category: "SPARKLERS",
+          unit: "1 BOX",
+          mrp: 300,
+          sale: 30,
+          img: "https://i.postimg.cc/Vk63x2xF/image.png",
+        },
+        {
+          id: 10,
+          name: "30 CM CRACKLING SPARKLERS",
+          category: "SPARKLERS",
+          unit: "1 BOX",
+          mrp: 330,
+          sale: 33,
+          img: "https://i.postimg.cc/RFYd2Jgz/image.png",
+        },
+        {
+          id: 11,
+          name: "30 CM GREEN SPARKLERS",
+          category: "SPARKLERS",
+          unit: "1 BOX",
+          mrp: 380,
+          sale: 38,
+          img: "https://i.postimg.cc/DzLb7JfT/image.png",
+        },
+        {
+          id: 12,
+          name: "30 CM RED SPARKLERS",
+          category: "SPARKLERS",
+          unit: "1 BOX",
+          mrp: 420,
+          sale: 42,
+          img: "https://i.postimg.cc/7Z7gZQXd/image.png",
+        },
+        {
+          id: 13,
+          name: "50 CM ELECTRIC SPARKLERS",
+          category: "SPARKLERS",
+          unit: "1 BOX",
+          mrp: 1300,
+          sale: 130,
+          img: "https://i.postimg.cc/yxXMKTtZ/image.png",
+        },
+        {
+          id: 14,
+          name: "50 CM COLOR SPARKLERS",
+          category: "SPARKLERS",
+          unit: "1 BOX",
+          mrp: 1400,
+          sale: 140,
+          img: "https://i.postimg.cc/Z5D1Jn7V/image.png",
+        },
+        {
+          id: 15,
+          name: "ROTATING SPARKLERS",
+          category: "SPARKLERS",
+          unit: "1 BOX",
+          mrp: 1650,
+          sale: 165,
+          img: "https://i.postimg.cc/Qx7BQK5W/image.png",
+        },
+        {
+          id: 16,
+          name: "CHAKKARAM BIG (10 PCS)",
+          category: "GROUND CHAKKARAS",
+          unit: "1 BOX",
+          mrp: 250,
+          sale: 25,
+          img: "https://i.postimg.cc/MHVQpnmR/image.png",
+        },
+        {
+          id: 17,
+          name: "CHAKKARAM BIG (25 PCS)",
+          category: "GROUND CHAKKARAS",
+          unit: "1 BOX",
+          mrp: 650,
+          sale: 65,
+          img: "https://i.postimg.cc/MHVQpnmR/image.png",
+        },
+        {
+          id: 18,
+          name: "CHAKKARAM SPECIAL",
+          category: "GROUND CHAKKARAS",
+          unit: "1 BOX",
+          mrp: 800,
+          sale: 80,
+          img: "https://i.postimg.cc/bwJw6GST/image.png",
+        },
+        {
+          id: 19,
+          name: "CHAKKARAM DELUXE",
+          category: "GROUND CHAKKARAS",
+          unit: "1 BOX",
+          mrp: 1000,
+          sale: 100,
+          img: "https://i.postimg.cc/MG2gnNwQ/image.png",
+        },
+        {
+          id: 20,
+          name: "FLOWER POT BIG",
+          category: "FLOWER POT",
+          unit: "1 BOX",
+          mrp: 500,
+          sale: 50,
+          img: "https://i.postimg.cc/44BKw17q/image.png",
+        },
+        {
+          id: 21,
+          name: "FLOWER POT SPECIAL",
+          category: "FLOWER POT",
+          unit: "1 BOX",
+          mrp: 700,
+          sale: 70,
+          img: "https://i.postimg.cc/3xDd85SQ/image.png",
+        },
+        {
+          id: 22,
+          name: "FLOWER POT ASHOKA",
+          category: "FLOWER POT",
+          unit: "1 BOX",
+          mrp: 1000,
+          sale: 100,
+          img: "https://i.postimg.cc/3xDd85SQ/image.png",
+        },
+        {
+          id: 23,
+          name: "FLOWER POT DELUXE",
+          category: "FLOWER POT",
+          unit: "1 BOX",
+          mrp: 1500,
+          sale: 150,
+          img: "https://i.postimg.cc/FHjNC9Cz/image.png",
+        },
+        {
+          id: 24,
+          name: "COLOR KOTI",
+          category: "FLOWER POT",
+          unit: "1 BOX",
+          mrp: 1700,
+          sale: 170,
+          img: "https://i.postimg.cc/FHZssryq/image.png",
+        },
+        {
+          id: 25,
+          name: "1 1/2 TWINKLING STAR",
+          category: "TWINKLING STAR",
+          unit: "1 BOX",
+          mrp: 150,
+          sale: 15,
+          img: "https://i.postimg.cc/J7ZHfd72/image.png",
+        },
+        {
+          id: 26,
+          name: '4" TWINKLING STAR DELUXE',
+          category: "TWINKLING STAR",
+          unit: "1 BOX",
+          mrp: 450,
+          sale: 45,
+          img: "https://i.postimg.cc/GhMLVkDf/image.png",
+        },
+        {
+          id: 27,
+          name: "2 3/4 KURUVI",
+          category: "ONE SOUND CRACKERS",
+          unit: "1 PKT",
+          mrp: 60,
+          sale: 6,
+          img: "https://i.postimg.cc/bJBFxBb8/image.png",
+        },
+        {
+          id: 28,
+          name: "3 1/2 LAKSHMI",
+          category: "ONE SOUND CRACKERS",
+          unit: "1 PKT",
+          mrp: 150,
+          sale: 15,
+          img: "https://i.postimg.cc/C5bXw4Bg/image.png",
+        },
+        {
+          id: 29,
+          name: '4" PARROT',
+          category: "ONE SOUND CRACKERS",
+          unit: "1 PKT",
+          mrp: 200,
+          sale: 20,
+          img: "https://i.postimg.cc/MKQKQkR6/image.png",
+        },
+        {
+          id: 30,
+          name: '4" DELUXE HULK',
+          category: "ONE SOUND CRACKERS",
+          unit: "1 PKT",
+          mrp: 250,
+          sale: 25,
+          img: "https://i.postimg.cc/PxCNVCLZ/image.png",
+        },
+        {
+          id: 31,
+          name: '4" GOLD LAKSHMI DLX',
+          category: "ONE SOUND CRACKERS",
+          unit: "1 PKT",
+          mrp: 250,
+          sale: 25,
+          img: "https://i.postimg.cc/1XRwzm43/image.png",
+        },
+        {
+          id: 32,
+          name: '5" JALLIKATTU DLX',
+          category: "ONE SOUND CRACKERS",
+          unit: "1 PKT",
+          mrp: 350,
+          sale: 35,
+          img: "https://i.postimg.cc/DZkc73qS/image.png",
+        },
+        {
+          id: 33,
+          name: "BULLET (FOILS BOMB)",
+          category: "BOMB",
+          unit: "1BOX",
+          mrp: 250,
+          sale: 25,
+          img: "https://i.postimg.cc/L41z33qm/image.png",
+        },
+        {
+          id: 34,
+          name: "HYDRO BOMB CLASSIC",
+          category: "BOMB",
+          unit: "1BOX",
+          mrp: 500,
+          sale: 50,
+          img: "https://i.postimg.cc/rmsjswvw/image.png",
+        },
+        {
+          id: 35,
+          name: "HYDROGEN BOMB",
+          category: "BOMB",
+          unit: "1 BOX",
+          mrp: 700,
+          sale: 70,
+          img: "https://i.postimg.cc/g0jhXVFF/image.png",
+        },
+        {
+          id: 36,
+          name: "DINOSAUR BOMB",
+          category: "BOMB",
+          unit: "1BOX",
+          mrp: 1100,
+          sale: 110,
+          img: "https://i.postimg.cc/Z57BSW9f/image.png",
+        },
+        {
+          id: 37,
+          name: "SINDHU BOMB DLX",
+          category: "BOMB",
+          unit: "1 BOX",
+          mrp: 1500,
+          sale: 150,
+          img: "https://i.postimg.cc/QMy4p7gT/image.png",
+        },
+        {
+          id: 38,
+          name: "BADA BOMB ULTRA DLX",
+          category: "GIANT & DELUXE",
+          unit: "1BOX",
+          mrp: 2750,
+          sale: 275,
+          img: "https://i.postimg.cc/gcQxf2sH/image.png",
+        },
+        {
+          id: 39,
+          name: "28 GIANT",
+          category: "GIANT & DELUXE",
+          unit: "1 PKT",
+          mrp: 220,
+          sale: 22,
+          img: "https://i.postimg.cc/2yRf7Mdh/image.png",
+        },
+        {
+          id: 40,
+          name: "56 GIANT",
+          category: "GIANT & DELUXE",
+          unit: "1 PKT",
+          mrp: 440,
+          sale: 44,
+          img: "https://i.postimg.cc/x8SWzHYP/image.png",
+        },
+        {
+          id: 41,
+          name: "50 DELUXE",
+          category: "GIANT & DELUXE",
+          unit: "1 PKT",
+          mrp: 1000,
+          sale: 100,
+          img: "https://i.postimg.cc/Mp43BRmj/image.png",
+        },
+        {
+          id: 42,
+          name: '4" 100 MEGA DELUXE',
+          category: "GIANT & DELUXE",
+          unit: "1 PKT",
+          mrp: 2000,
+          sale: 200,
+          img: "https://i.postimg.cc/ZncDvMwT/image.png",
+        },
+        {
+          id: 43,
+          name: "1K",
+          category: "RED MAGIC CRACKERS",
+          unit: "1 BOX",
+          mrp: 1200,
+          sale: 120,
+          img: "https://i.postimg.cc/s2QRt7cV/image.png",
+        },
+        {
+          id: 44,
+          name: "2K",
+          category: "RED MAGIC CRACKERS",
+          unit: "1 BOX",
+          mrp: 3000,
+          sale: 300,
+          img: "https://i.postimg.cc/Cx92ntGg/image.png",
+        },
+        {
+          id: 45,
+          name: "5K",
+          category: "RED MAGIC CRACKERS",
+          unit: "1 BOX",
+          mrp: 7000,
+          sale: 700,
+          img: "https://i.postimg.cc/8zSQz4vc/image.png",
+        },
+        {
+          id: 46,
+          name: "10K",
+          category: "RED MAGIC CRACKERS",
+          unit: "1 BOX",
+          mrp: 16000,
+          sale: 1600,
+          img: "https://i.postimg.cc/gJMByqrV/image.png",
+        },
+        {
+          id: 47,
+          name: "1K (BRAND)",
+          category: "RED MAGIC CRACKERS",
+          unit: "1 BOX",
+          mrp: 3500,
+          sale: 350,
+          img: "https://i.postimg.cc/wT7F52TT/image.png",
+        },
+        {
+          id: 48,
+          name: "2K (BRAND)",
+          category: "RED MAGIC CRACKERS",
+          unit: "1 BOX",
+          mrp: 6000,
+          sale: 600,
+          img: "https://i.postimg.cc/CKYj2sY8/image.png",
+        },
+        {
+          id: 49,
+          name: "5K (BRAND)",
+          category: "RED MAGIC CRACKERS",
+          unit: "1 BOX",
+          mrp: 14000,
+          sale: 1400,
+          img: "https://i.postimg.cc/zD9pjWLC/image.png",
+        },
+        {
+          id: 50,
+          name: "10K (BRAND)",
+          category: "RED MAGIC CRACKERS",
+          unit: "1 BOX",
+          mrp: 25000,
+          sale: 2500,
+          img: "https://i.postimg.cc/fL178nbz/image.png",
+        },
+        {
+          id: 51,
+          name: "SKY SHOT",
+          category: "MEGA FANCY OUT",
+          unit: "1 PCS",
+          mrp: 400,
+          sale: 40,
+          img: "https://i.postimg.cc/3xvfg1JQ/image.png",
+        },
+        {
+          id: 52,
+          name: '2" ARIAL FANCY',
+          category: "MEGA FANCY OUT",
+          unit: "1 PCS",
+          mrp: 900,
+          sale: 90,
+          img: "https://i.postimg.cc/nhPBTfrX/image.png",
+        },
+        {
+          id: 53,
+          name: '2" ARIAL FANCY (3 PCS)',
+          category: "MEGA FANCY OUT",
+          unit: "3 PCS",
+          mrp: 2200,
+          sale: 220,
+          img: "https://i.postimg.cc/PJXCTSNG/image.png",
+        },
+        {
+          id: 54,
+          name: "3 1/2 ARIAL FANCY",
+          category: "MEGA FANCY OUT",
+          unit: "1 PCS",
+          mrp: 2500,
+          sale: 250,
+          img: "https://i.postimg.cc/N0CzmkK1/image.png",
+        },
+        {
+          id: 55,
+          name: "3 1/2 GUN OUT (ULTRA SOUND)",
+          category: "MEGA FANCY OUT",
+          unit: "1 PCS",
+          mrp: 2800,
+          sale: 280,
+          img: "https://i.postimg.cc/R0hPSJgq/image.png",
+        },
+        {
+          id: 56,
+          name: '4" ARIAL FANCY',
+          category: "MEGA FANCY OUT",
+          unit: "1 PCS",
+          mrp: 3500,
+          sale: 350,
+          img: "https://i.postimg.cc/tJ3kS34v/image.png",
+        },
+        {
+          id: 57,
+          name: '4" PIPE (ULTRA SHOW)',
+          category: "MEGA FANCY OUT",
+          unit: "1 PCS",
+          mrp: 5000,
+          sale: 500,
+          img: "https://i.postimg.cc/8cSB67mR/image.png",
+        },
+        {
+          id: 58,
+          name: '5" PIPE FANCY',
+          category: "MEGA FANCY OUT",
+          unit: "1 PCS",
+          mrp: 7000,
+          sale: 700,
+          img: "https://i.postimg.cc/wvKDC1PC/image.png",
+        },
+        {
+          id: 59,
+          name: '5" FANCY (ULTRA SHOW)',
+          category: "MEGA FANCY OUT",
+          unit: "2 PCS",
+          mrp: 15000,
+          sale: 1500,
+          img: "https://i.postimg.cc/DZByqDqx/image.png",
+        },
+        {
+          id: 60,
+          name: "12 SHOT",
+          category: "MULTI COLOUR SKY SHOT",
+          unit: "1 BOX",
+          mrp: 1200,
+          sale: 120,
+          img: "https://i.postimg.cc/GhZqhDP7/image.png",
+        },
+        {
+          id: 61,
+          name: "25 SHOT",
+          category: "MULTI COLOUR SKY SHOT",
+          unit: "1 BOX",
+          mrp: 2100,
+          sale: 210,
+          img: "https://i.postimg.cc/nzPqS80R/image.png",
+        },
+        {
+          id: 62,
+          name: "30 SHOT MULTI COLOUR (GOLD)",
+          category: "MULTI COLOUR SKY SHOT",
+          unit: "1 BOX",
+          mrp: 3000,
+          sale: 300,
+          img: "https://i.postimg.cc/k5R1vcJd/image.png",
+        },
+        {
+          id: 63,
+          name: "60 SHOT MULTI COLOUR (GOLD)",
+          category: "MULTI COLOUR SKY SHOT",
+          unit: "1 BOX",
+          mrp: 7500,
+          sale: 750,
+          img: "https://i.postimg.cc/ryNhjzkz/image.png",
+        },
+        {
+          id: 64,
+          name: "120 SHOT MULTI COLOUR (GOLD)",
+          category: "MULTI COLOUR SKY SHOT",
+          unit: "1 BOX",
+          mrp: 15000,
+          sale: 1500,
+          img: "https://i.postimg.cc/L593wBp5/image.png",
+        },
+        {
+          id: 65,
+          name: "240 SHOT MULTI COLOUR (GOLD)",
+          category: "MULTI COLOUR SKY SHOT",
+          unit: "1 BOX",
+          mrp: 26000,
+          sale: 2600,
+          img: "https://i.postimg.cc/prmxKdVd/image.png",
+        },
+        {
+          id: 66,
+          name: "30 SHOT MULTI COLOUR (PREMIUM)",
+          category: "MULTI COLOUR SKY SHOT",
+          unit: "1 BOX",
+          mrp: 5000,
+          sale: 500,
+          img: "https://i.postimg.cc/8cZmSJpH/image.png",
+        },
+        {
+          id: 67,
+          name: "60 SHOT MULTI COLOUR (PREMIUM)",
+          category: "MULTI COLOUR SKY SHOT",
+          unit: "1 BOX",
+          mrp: 11000,
+          sale: 1100,
+          img: "https://i.postimg.cc/3JWgGwrs/image.png",
+        },
+        {
+          id: 68,
+          name: "120 SHOT MULTI COLOUR (PREMIUM)",
+          category: "MULTI COLOUR SKY SHOT",
+          unit: "1 BOX",
+          mrp: 22000,
+          sale: 2200,
+          img: "https://i.postimg.cc/jq3fRr6Z/image.png",
+        },
+        {
+          id: 69,
+          name: "240 SHOT MULTI COLOUR (PREMIUM)",
+          category: "MULTI COLOUR SKY SHOT",
+          unit: "1 BOX",
+          mrp: 30000,
+          sale: 3000,
+          img: "https://i.postimg.cc/tgm9JPyc/image.png",
+        },
+        {
+          id: 70,
+          name: "KITKAT",
+          category: "FANCY FOUNTAINS",
+          unit: "1 BOX",
+          mrp: 250,
+          sale: 25,
+          img: "https://i.postimg.cc/GtGMYJCm/image.png",
+        },
+        {
+          id: 71,
+          name: "SNAKE TABLET",
+          category: "FANCY FOUNTAINS",
+          unit: "1 PKT",
+          mrp: 250,
+          sale: 25,
+          img: "https://i.postimg.cc/q7WXLhQh/image.png",
+        },
+        {
+          id: 72,
+          name: "BUTTERFLY (10 PCS)",
+          category: "FANCY FOUNTAINS",
+          unit: "1 BOX",
+          mrp: 600,
+          sale: 60,
+          img: "https://i.postimg.cc/15MGdYJZ/image.png",
+        },
+        {
+          id: 73,
+          name: "GANGA JAMUNA",
+          category: "FANCY FOUNTAINS",
+          unit: "1 PCS",
+          mrp: 800,
+          sale: 80,
+          img: "https://i.postimg.cc/wTBy1xcS/image.png",
+        },
+        {
+          id: 74,
+          name: "TOM & JERRY",
+          category: "FANCY FOUNTAINS",
+          unit: "5 PCS",
+          mrp: 1600,
+          sale: 160,
+          img: "https://i.postimg.cc/KYt461xg/image.png",
+        },
+        {
+          id: 75,
+          name: "MASTER TREAT CRACKLING",
+          category: "FANCY FOUNTAINS",
+          unit: "1 BOX",
+          mrp: 1000,
+          sale: 100,
+          img: "https://i.postimg.cc/5ySGYdLt/image.png",
+        },
+        {
+          id: 76,
+          name: "DRONE",
+          category: "FANCY FOUNTAINS",
+          unit: "1 BOX",
+          mrp: 800,
+          sale: 80,
+          img: "https://i.postimg.cc/d1psDvsK/image-removebg-preview.jpg",
+        },
+        {
+          id: 77,
+          name: "DANCING BAMBARAM (5 PCS)",
+          category: "FANCY FOUNTAINS",
+          unit: "1 BOX",
+          mrp: 1000,
+          sale: 100,
+          img: "https://i.postimg.cc/pd7bJZgf/image.png",
+        },
+        {
+          id: 78,
+          name: "BINGO SHOWER (5 PCS)",
+          category: "FANCY FOUNTAINS",
+          unit: "1 BOX",
+          mrp: 1100,
+          sale: 110,
+          img: "https://i.postimg.cc/CMbTbbJ8/image.png",
+        },
+        {
+          id: 79,
+          name: "TIN BEER (RED, GREEN, CRACKLING)",
+          category: "FANCY FOUNTAINS",
+          unit: "1 PCS",
+          mrp: 900,
+          sale: 90,
+          img: "https://i.postimg.cc/wjCQ5Rwt/image-removebg-preview-1.jpg",
+        },
+        {
+          id: 80,
+          name: "GOLDEN POPS (5 PCS)",
+          category: "FANCY FOUNTAINS",
+          unit: "1 BOX",
+          mrp: 1200,
+          sale: 120,
+          img: "https://i.postimg.cc/ZnWWDVRJ/image.png",
+        },
+        {
+          id: 81,
+          name: "PEACOCK (RED, GREEN, GOLD)",
+          category: "FANCY FOUNTAINS",
+          unit: "1 BOX",
+          mrp: 1500,
+          sale: 150,
+          img: "https://i.postimg.cc/6p8N2gPW/image-removebg-preview-2.jpg",
+        },
+        {
+          id: 82,
+          name: "PENTA FANCY (5 PCS)",
+          category: "FANCY FOUNTAINS",
+          unit: "1 BOX",
+          mrp: 1500,
+          sale: 150,
+          img: "https://i.postimg.cc/Wb4BCxTG/image.png",
+        },
+        {
+          id: 83,
+          name: "RAINBOW COLOUR SMOKE (3 PCS)",
+          category: "FANCY FOUNTAINS",
+          unit: "1 BOX",
+          mrp: 1800,
+          sale: 180,
+          img: "https://i.postimg.cc/T2tSVQgp/image.png",
+        },
+        {
+          id: 84,
+          name: "MEGA SIREN (3 PCS)",
+          category: "FANCY FOUNTAINS",
+          unit: "1 BOX",
+          mrp: 2000,
+          sale: 200,
+          img: "https://i.postimg.cc/NjBpZH1W/image.png",
+        },
+        {
+          id: 85,
+          name: "SILVER MOON",
+          category: "FANCY FOUNTAINS",
+          unit: "1 BOX",
+          mrp: 2000,
+          sale: 200,
+          img: "https://i.postimg.cc/zXSkwG9p/image.png",
+        },
+        {
+          id: 86,
+          name: "PHOTO FLASH (5 PCS)",
+          category: "FANCY FOUNTAINS",
+          unit: "1 BOX",
+          mrp: 700,
+          sale: 70,
+          img: "https://i.postimg.cc/nrTCzgPK/image.png",
+        },
+        {
+          id: 87,
+          name: "COCKFITE CRACKLING (2 PCS)",
+          category: "FANCY FOUNTAINS",
+          unit: "1 BOX",
+          mrp: 2200,
+          sale: 220,
+          img: "https://i.postimg.cc/fTB8nbBy/image.png",
+        },
+        {
+          id: 88,
+          name: "WELCOME ANGEL",
+          category: "FANCY FOUNTAINS",
+          unit: "1 PCS",
+          mrp: 1750,
+          sale: 175,
+          img: "https://i.postimg.cc/J465Y2zB/image.png",
+        },
+        {
+          id: 89,
+          name: "TRICOLOUR FOUNTAIN (5 PCS)",
+          category: "FANCY FOUNTAINS",
+          unit: "1 BOX",
+          mrp: 2500,
+          sale: 250,
+          img: "https://i.postimg.cc/kMjS7t30/image.png",
+        },
+        {
+          id: 90,
+          name: "FIRE EGG (2 PCS)",
+          category: "FANCY FOUNTAINS",
+          unit: "1 BOX",
+          mrp: 1500,
+          sale: 150,
+          img: "https://i.postimg.cc/0QVz5h3Y/image.png",
+        },
+        {
+          id: 91,
+          name: "HANUMAN KADA",
+          category: "FANCY FOUNTAINS",
+          unit: "1 PCS",
+          mrp: 1500,
+          sale: 150,
+          img: "https://i.postimg.cc/0y7rKzF2/image.png",
+        },
+        {
+          id: 92,
+          name: "GUITAR",
+          category: "FANCY FOUNTAINS",
+          unit: "1 BOX",
+          mrp: 2200,
+          sale: 220,
+          img: "https://i.postimg.cc/y8f6Z0nK/image-removebg-preview-3.jpg",
+        },
+        {
+          id: 93,
+          name: "WATER QUEEN (COLD PYRO)",
+          category: "FANCY FOUNTAINS",
+          unit: "1 PCS",
+          mrp: 3500,
+          sale: 350,
+          img: "https://i.postimg.cc/fyZQFb55/image.png",
+        },
+        {
+          id: 94,
+          name: "BADA PEACOCK",
+          category: "FANCY FOUNTAINS",
+          unit: "1 PCS",
+          mrp: 3000,
+          sale: 300,
+          img: "https://i.postimg.cc/BbJRpVQV/image.png",
+        },
+        {
+          id: 95,
+          name: "MAGIC SHOW MONEY PAPER (2 PCS)",
+          category: "FANCY FOUNTAINS",
+          unit: "1 BOX",
+          mrp: 2000,
+          sale: 200,
+          img: "https://i.postimg.cc/VsHFDh60/image.png",
+        },
+        {
+          id: 96,
+          name: "PAPER BOMB 1/4 KG",
+          category: "FANCY FOUNTAINS",
+          unit: "1 PCS",
+          mrp: 450,
+          sale: 45,
+          img: "https://i.postimg.cc/rwyxTCK2/image.png",
+        },
+        {
+          id: 97,
+          name: "PAPER BOMB 1/2 KG",
+          category: "FANCY FOUNTAINS",
+          unit: "1 PCS",
+          mrp: 900,
+          sale: 90,
+          img: "https://i.postimg.cc/3wVv2s93/image.png",
+        },
+        {
+          id: 98,
+          name: "PAPER BOMB 1 KG",
+          category: "FANCY FOUNTAINS",
+          unit: "1 PCS",
+          mrp: 1800,
+          sale: 180,
+          img: "https://i.postimg.cc/0jdKRbvN/image.png",
+        },
+        {
+          id: 99,
+          name: "RED BIJILI 50 PCS (GOLD PKT)",
+          category: "BIJILI",
+          unit: "1PKT",
+          mrp: 200,
+          sale: 20,
+          img: "https://i.postimg.cc/8kq4kDwT/image.png",
+        },
+        {
+          id: 100,
+          name: "RED BIJILI 100 PCS (GOLD PKT)",
+          category: "BIJILI",
+          unit: "1PKT",
+          mrp: 400,
+          sale: 40,
+          img: "https://i.postimg.cc/HL4RXnZ0/image.png",
+        },
+        {
+          id: 101,
+          name: "BABY ROCKET",
+          category: "ROCKET",
+          unit: "1 BOX",
+          mrp: 300,
+          sale: 30,
+          img: "https://i.postimg.cc/cCK9JBvH/image.png",
+        },
+        {
+          id: 102,
+          name: "BOMB ROCKET",
+          category: "ROCKET",
+          unit: "1 BOX",
+          mrp: 600,
+          sale: 60,
+          img: "https://i.postimg.cc/MGMvdcfB/image.png",
+        },
+        {
+          id: 103,
+          name: "LUNIC ROCKET",
+          category: "ROCKET",
+          unit: "1 BOX",
+          mrp: 1200,
+          sale: 120,
+          img: "https://i.postimg.cc/13L9Rv4g/image.png",
+        },
+        {
+          id: 104,
+          name: "WHISTLING ROCKET",
+          category: "ROCKET",
+          unit: "1 BOX",
+          mrp: 1500,
+          sale: 150,
+          img: "https://i.postimg.cc/j5xBRf6w/image.png",
+        },
+        {
+          id: 105,
+          name: "GIFT BOX",
+          category: "GIFT BOX",
+          unit: "18 ITEMS",
+          mrp: 2000,
+          sale: 200,
+          img: "https://i.postimg.cc/W3ZXZ6Gf/image.png",
+        },
+        {
+          id: 106,
+          name: "GIFT BOX",
+          category: "GIFT BOX",
+          unit: "21 ITEMS",
+          mrp: 3000,
+          sale: 300,
+          img: "https://i.postimg.cc/FspG0KSm/image.png",
+        },
+        {
+          id: 107,
+          name: "GIFT BOX",
+          category: "GIFT BOX",
+          unit: "30 ITEMS",
+          mrp: 5000,
+          sale: 500,
+          img: "https://i.postimg.cc/Zn32Tzsn/image.png",
+        },
+        {
+          id: 108,
+          name: "GIFT BOX",
+          category: "GIFT BOX",
+          unit: "40 ITEMS",
+          mrp: 7000,
+          sale: 700,
+          img: "https://i.postimg.cc/pTMKwNjq/image.png",
+        },
+        {
+          id: 109,
+          name: "GIFT BOX",
+          category: "GIFT BOX",
+          unit: "50 ITEMS",
+          mrp: 9000,
+          sale: 900,
+          img: "https://i.postimg.cc/tCvWXnP1/image.png",
+        },
+        {
+          id: 110,
+          name: "ANNAM",
+          category: "MATCH BOX",
+          unit: "1 BOX",
+          mrp: 600,
+          sale: 60,
+          img: "https://i.postimg.cc/xjh9n08f/image.png",
+        },
+        {
+          id: 111,
+          name: "HERO",
+          category: "MATCH BOX",
+          unit: "1 BOX",
+          mrp: 1000,
+          sale: 100,
+          img: "https://i.postimg.cc/LsxM7SGM/image.png",
+        },
+        {
+          id: 112,
+          name: "ROYAL SUPER MEGA",
+          category: "MATCH BOX",
+          unit: "1 BOX",
+          mrp: 1500,
+          sale: 150,
+          img: "https://i.postimg.cc/W3JTJKfL/image-removebg-preview-4.jpg",
+        },
+        {
+          id: 113,
+          name: "GUN SMALL",
+          category: "GUN",
+          unit: "1 PIECE",
+          mrp: 300,
+          sale: 30,
+          img: "https://i.postimg.cc/X7n6Vp30/image.png",
+        },
+        {
+          id: 114,
+          name: "GUN MEDIUM",
+          category: "GUN",
+          unit: "1 PIECE",
+          mrp: 500,
+          sale: 50,
+          img: "https://i.postimg.cc/2ywJq7mN/image.png",
+        },
+        {
+          id: 115,
+          name: "GUN BIG",
+          category: "GUN",
+          unit: "1 PIECE",
+          mrp: 800,
+          sale: 80,
+          img: "https://i.postimg.cc/vZ1qMs1s/image.png",
+        },
+        {
+          id: 116,
+          name: "GUN BADA BIG",
+          category: "GUN",
+          unit: "1 PIECE",
+          mrp: 1200,
+          sale: 120,
+          img: "https://i.postimg.cc/gjTVBxH6/image.png",
+        },
+        {
+          id: 117,
+          name: "ROLL CAP",
+          category: "GUN",
+          unit: "1 PIECE",
+          mrp: 100,
+          sale: 10,
+          img: "https://i.postimg.cc/hjxLfZSf/image.png",
+        },
+        {
+          id: 118,
+          name: "RING CAP",
+          category: "GUN",
+          unit: "1 PKT",
+          mrp: 80,
+          sale: 8,
+          img: "https://i.postimg.cc/bvg2BGzN/image.png",
+        },
+        {
+          id: 119,
+          name: "POP-POP",
+          category: "GUN",
+          unit: "1 BOX",
+          mrp: 100,
+          sale: 10,
+          img: "https://i.postimg.cc/t4StfVSC/image.png",
+        },
+      ];
+
+      let editId = null;
+
+      function renderTable() {
+        const tbody = document.querySelector("#productTable tbody");
+        tbody.innerHTML = "";
+        const search = document.getElementById("searchBox").value.toLowerCase();
+        const filter = document.getElementById("categoryFilter").value;
+
+        products
+          .filter(
+            (p) =>
+              (p.name.toLowerCase().includes(search) || !search) &&
+              (p.category === filter || !filter)
+          )
+          .forEach((p) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+          <td>${p.id}</td>
+          <td>${p.name}</td>
+          <td>${p.category}</td>
+          <td>${p.unit}</td>
+          <td>${p.mrp}</td>
+          <td>${p.sale}</td>
+          <td><img src="${p.img}" width="40"></td>
+          <td>
+            <button onclick="editProduct(${p.id})">Edit</button>
+  <button class="delete-btn" onclick="deleteProduct(${p.id})">Delete</button>
+          </td>
+        `;
+            tbody.appendChild(tr);
+          });
+
+        // Update categories
+        const cats = [...new Set(products.map((p) => p.category))];
+        const select = document.getElementById("categoryFilter");
+        const current = select.value;
+        select.innerHTML = `<option value="">All Categories</option>`;
+        cats.forEach((c) => {
+          const opt = document.createElement("option");
+          opt.value = c;
+          opt.textContent = c;
+          if (c === current) opt.selected = true;
+          select.appendChild(opt);
+        });
+      }
+
+      //   function editProduct(id) {
+      //     const p = products.find((x) => x.id === id);
+      //     if (!p) return;
+      //     editId = id;
+      //     document.getElementById("formTitle").innerText = "Edit Product";
+      //     document.getElementById("prodName").value = p.name;
+      //     document.getElementById("prodCategory").value = p.category;
+      //     document.getElementById("prodUnit").value = p.unit;
+      //     document.getElementById("prodSale").value = p.sale;
+      //     document.getElementById("prodMrp").value = p.mrp;
+      //     document.getElementById("prodImg").value = p.img;
+      //   }
+      function editProduct(id) {
+        const p = products.find((x) => x.id === id);
+        if (!p) return;
+        editId = id;
+        document.getElementById("formTitle").innerText = "Edit Product";
+        document.getElementById("prodName").value = p.name;
+        document.getElementById("prodCategory").value = p.category;
+        document.getElementById("prodUnit").value = p.unit;
+        document.getElementById("prodSale").value = p.sale;
+        document.getElementById("prodMrp").value = p.mrp;
+        document.getElementById("prodImg").value = p.img;
+
+        // 👇 This will scroll the page to the form
+        document
+          .getElementById("formSection")
+          .scrollIntoView({ behavior: "smooth" });
+      }
+
+      //   function deleteProduct(id) {
+      //     products = products.filter((p) => p.id !== id);
+      //     renderTable();
+      //   }
+      function deleteProduct(id) {
+        const p = products.find((x) => x.id === id);
+        if (!p) return;
+        const confirmDelete = confirm(
+          `Are you sure you want to delete "${p.name}"?`
+        );
+        if (!confirmDelete) return;
+        products = products.filter((p) => p.id !== id);
+        renderTable();
+      }
+
+      function saveProduct() {
+        const name = document.getElementById("prodName").value.trim();
+        const category = document.getElementById("prodCategory").value.trim();
+        const unit = document.getElementById("prodUnit").value.trim();
+        const sale = parseInt(document.getElementById("prodSale").value);
+        if (!name || !category || !unit || !sale) {
+          alert("Please fill all fields");
+          return;
+        }
+        const mrp = sale * 10;
+        const img = document.getElementById("prodImg").value.trim();
+
+        if (editId) {
+          const p = products.find((x) => x.id === editId);
+          p.name = name;
+          p.category = category;
+          p.unit = unit;
+          p.sale = sale;
+          p.mrp = mrp;
+          p.img = img;
+        } else {
+          const newId = products.length
+            ? Math.max(...products.map((p) => p.id)) + 1
+            : 1;
+          products.push({ id: newId, name, category, unit, sale, mrp, img });
+        }
+        resetForm();
+        renderTable();
+      }
+
+      function resetForm() {
+        editId = null;
+        document.getElementById("formTitle").innerText = "Add New Product";
+        document.getElementById("prodName").value = "";
+        document.getElementById("prodCategory").value = "";
+        document.getElementById("prodUnit").value = "";
+        document.getElementById("prodSale").value = "";
+        document.getElementById("prodMrp").value = "";
+        document.getElementById("prodImg").value = "";
+      }
+
+      function updateMRP() {
+        const sale = document.getElementById("prodSale").value;
+        document.getElementById("prodMrp").value = sale ? sale * 10 : "";
+      }
+
+      function downloadJSON() {
+        const blob = new Blob([JSON.stringify(products, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "products.json";
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      document
+        .getElementById("searchBox")
+        .addEventListener("input", renderTable);
+      document
+        .getElementById("categoryFilter")
+        .addEventListener("change", renderTable);
+
+      renderTable();
+    </script>
+  </body>
+</html>
