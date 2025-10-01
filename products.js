@@ -1,6 +1,6 @@
 // --- Data: Starter catalog ---
 
-const STARTER_ITEMS = [
+let products = [
   {
     id: 1,
     name: "10 CM ELECTRIC SPARKLERS",
@@ -1163,3 +1163,4 @@ const STARTER_ITEMS = [
     img: "https://i.postimg.cc/dtGSZfwd/Gemini-Generated-Image-uubap3uubap3uuba.png",
   },
 ];
+
